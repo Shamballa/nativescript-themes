@@ -39,14 +39,15 @@ Themes.prototype.applyTheme = function(cssFile, options) {
     if (application.cssSelectorVersion === 0 && !frameCommon.topmost()) {
         var self = this;
         application.on(application.launchEvent, function() {
-            internalLoadCss(cssFile, self._curAppPath);
+            internalLoadCss(cssFile, self._curAppPath, options);
             if (!(options && options.noSave)) {
                 appSettings.setString('__NS.themes', cssFile);
+                console.log('The theme is gonna be saved');
             }
         });
         return;
     }
-    internalLoadCss(cssFile, this._curAppPath);
+    internalLoadCss(cssFile, this._curAppPath, options);
     if (!(options && options.noSave)) {
         appSettings.setString('__NS.themes', cssFile);
     }
@@ -57,7 +58,7 @@ Themes.prototype.applyTheme = function(cssFile, options) {
  * @param cssFile - css file to load
  * @param path - application path
  */
-function internalLoadCss(cssFile, path) {
+function internalLoadCss(cssFile, path, options) {  
     var FSA = new fsa();
     var cssFileName = cssFile;
 
@@ -91,8 +92,12 @@ function internalLoadCss(cssFile, path) {
         if (FSA.fileExists(cssFileName)) {
             var file = fs.File.fromPath(cssFileName);
             var textCSS = file.readTextSync();
-            if (textCSS) {
-                applicationCss = application.parseCss(textCSS, cssFileName);
+            if (textCSS) {     
+                if (!(options && options.overwrite)) {
+                    applicationCss = application.addCss(textCSS);
+                } else {
+                    applicationCss = application.parseCss(textCSS, cssFileName);
+                }                   
             }
 
             // If we fail to load the file, then we will treat it as if we had already loaded it
